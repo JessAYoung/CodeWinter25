@@ -87,6 +87,29 @@ fn scan_directory(directory: &str) -> (Vec<PrintJob>, Vec<PrintJob>) {
     }
     (stl_files, gcode_files)
 }
+fn main() {
+    let directory = "./print_files"; 
+    let prioritize_small_files = true; 
+
+    println!("Scanning directory: {}", directory);
+
+    let (_stl_files, mut gcode_files) = scan_directory(directory);
+    
+    println!("Found {} G-code files.", gcode_files.len());
+
+    let mut queue = PrintQueue::new(prioritize_small_files);
+
+    // Sort and add jobs to queue
+    gcode_files.sort_by_key(|job| job.file_size);
+    for job in &gcode_files {
+        println!("Adding job to queue: {} ({} bytes)", job.filename, job.file_size);
+        queue.add_job(job.clone());
+    }
+
+    // Process one job
+    println!("Processing the next print job...");
+    queue.process_next_job();
+}
 
 /// Function to extract estimated print time from a G-code file
 fn extract_print_time(path: &Path) -> Option<Duration> {
@@ -128,3 +151,4 @@ fn main() {
     // Process one job
     queue.process_next_job();
 }
+ 
